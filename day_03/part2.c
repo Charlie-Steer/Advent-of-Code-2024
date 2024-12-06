@@ -28,80 +28,47 @@ int main(void) {
 	char *dont_end = input;
 	bool is_do = true;
 	while ((mul_start = strstr(input, "mul("))) {
+		printf("mul_start: %.10s\n", mul_start);
 		
 		do_start = input;
 		dont_start = input;
+		do_end = input;
+		dont_end = input;
 		while ((do_start && do_start < mul_start) || (dont_start && dont_start < mul_start)) {
-			// printf("mul_start:  %.20s\n", mul_start);
-			// printf("do_start:   %.20s\n", do_start);
-			// printf("do_end:     %.20s\n", do_end);
-			// printf("dont_start: %.20s\n", dont_start);
-			// printf("dont_end:   %.20s\n", dont_end);
-			if (do_end != NULL) {
+			if (do_end) {
 				do_start = strstr(do_end, "do()");
-			}
-			if (dont_end != NULL) {
-				dont_start = strstr(dont_end, "don't()");
 			}
 			if (do_start) {
 				do_end = &do_start[4];
 			}
-			else {
-				do_end = NULL;
+			if (dont_end) {
+				dont_start = strstr(dont_end, "don't()");
 			}
 			if (dont_start) {
 				dont_end = &dont_start[7];
 			}
-			else {
-				dont_end = NULL;
-			}
-			// printf("mul_start:  %.20s\n", mul_start);
-			// printf("do_start:   %.20s\n", do_start);
-			// printf("dont_start: %.20s\n\n", dont_start);
-			int mul_order = 1;
-			int do_order = 1;
-			int dont_order = 1;
-			if (mul_start > do_start) {
-				mul_order++;
-			}
-			else {
-				do_order++;
-			}
-			if (mul_start > dont_start) {
-				mul_order++;
-			}
-			else {
-				dont_order++;
-			}
-			if (do_start > dont_start) {
-				do_order++;
-			}
-			else {
-				dont_order++;
-			}
-			printf("mul_start:  %d  %16ld\n", mul_order, (long)mul_start);
-			printf("do_start:   %d  %16ld\n", do_order, (long)do_start);
-			printf("dont_start: %d  %16ld\n\n", dont_order, (long)dont_start);
-			if (do_start && do_start < mul_start && do_start > dont_start) {
-				last_valid_do = do_start;
-				is_do = true;
-				printf("is_do set");
-			}
-			else {
-				first_invalid_do = do_start;
-			}
 
-			if (dont_start && dont_start < mul_start && dont_start > do_start) {
+			if (do_start && do_start < mul_start) {
+				printf("do found\n");
+				last_valid_do = do_start;
+			}
+			if (dont_start && dont_start < mul_start) {
+				printf("don't found\n");
 				last_valid_dont = dont_start;
-				is_do = false;
-				printf("is_do unset");
 			}
-			else {
-				first_invalid_dont = dont_start;
-			}
+		}
+		if (last_valid_do && last_valid_do > last_valid_dont) {
+			printf("do\n");
+			is_do = true;
+		}
+		else if (last_valid_dont && last_valid_dont > last_valid_do) {
+			printf("don't\n");
+			is_do = false;
 		}
 
 		if (!is_do) {
+			printf("continuing...\n");
+			input = &mul_start[4];
 			continue;
 		}
 

@@ -7,7 +7,6 @@ int get_line_len(char *text);
 int get_number_of_lines(char *text);
 void DEBUG_print_block(char **block);
 
-// 5832 too high.
 int main(void) {
 	char **block = get_input_block("input");
 	// DEBUG_print_block(block);

@@ -7,6 +7,7 @@
 
 #define NLINES 850
 #define NUM_ARR_LEN 20
+#define OP_BUFF_LEN 20
 
 typedef struct equation {
 	long solution;
@@ -23,7 +24,7 @@ int get_number_of_operands(int *operands) {
 	return (i);
 }
 
-int get_num_len_in_base(int n, int base) {
+int get_num_len_in_base(unsigned long n, int base) {
 	int i;
 	for (i = 1; (n /= base) != 0; i++) {
 		;
@@ -34,10 +35,14 @@ int get_num_len_in_base(int n, int base) {
 char *ultoa(unsigned long number) {
 	char *str = calloc(21, 1);
 	int num_len = get_num_len_in_base(number, 10);
-	while (number) {
-		str[num_len--] = (number % 10) + '0';
+	// printf("num_len: %d\n", num_len);
+	for (int i = num_len - 1; number; i--) {
+		// printf("mod: %c\n", (int)(number % 10) + '0');
+		str[i] = (number % 10) + '0';
+		// printf("i: %d, str[i]: %c\n", i, str[i]);
 		number /= 10;
 	}
+	str[num_len] = '\0';
 
 	return (str);
 }
@@ -49,14 +54,14 @@ unsigned long get_operation_result(int *operands, char *operators, int n_operand
 			result = operands[0];
 			continue;
 		}
-		unsigned int operator = operators[i - 1];
-		printf("sequence: %s, operator: %c\n", operators, operator);
+		unsigned int operator = operators[OP_BUFF_LEN - i];
 		if (operator == '0') {
 			result += operands[i];
 		}
 		else if (operator == '1') {
 			result *= operands[i];
 		}
+		//! Concat not working.
 		else if (operator == '2') {
 			char *ascii_result = ultoa(result);
 			char *ascii_operand = ultoa(operands[i]);
@@ -67,63 +72,77 @@ unsigned long get_operation_result(int *operands, char *operators, int n_operand
 				exit(1);
 			}
 			result = strtoul(strncat(ascii_result, ascii_operand, 20), NULL, 10);
+			free(ascii_result);
+			free(ascii_operand);
 		}
 		else {
 			assert(0);
 		}
+		// printf("result: %lu\n", result);
 	}
 	return (result);
 }
 
 char *int_to_operators(int number, int n_operands) {
-	int num_len = get_num_len_in_base(number, 3);
-	printf("num_len: %d\n", num_len);
+	static char *str = NULL;
+	if (str == NULL) {
+		str = malloc(OP_BUFF_LEN + 1);
+	}
 
-	char *str = malloc(n_operands);
-	memset(str, '0', n_operands - 1);
-	str[n_operands - 1] = '\0';
-	printf("%d\n", number);
+	if (number == 0) {
+		memset(str, '0', OP_BUFF_LEN);
+		str[OP_BUFF_LEN] = '\0';
+	}
+	int num_len = get_num_len_in_base(number, 3);
 
 	for (int i = 0; i < num_len; i++) {
-		str[i] = (number % 3) + '0';
+		str[OP_BUFF_LEN - 1 - i] = (number % 3) + '0';
 		number /= 3;
 	}
-	printf("%s\n", str);
 
 	return (str);
 }
 
 //! UNTESTED
 char *get_next_operator_list(char *operators, int n_operands) {
-	printf("operators: %s\n", operators);
 	int n;
 	if (operators == NULL) {
-		n = strtoul("0", NULL, 3); //! What happens if operators is NULL?
+		// n = strtoul("0", NULL, 3);
+		operators = int_to_operators(0, n_operands);
+		return (operators);
 	}
 	else {
-		n = strtoul(operators, NULL, 3); //! What happens if operators is NULL?
-		free(operators);
+		n = strtoul(operators, NULL, 3);
+		// free(operators);
 	}
-	printf("n: %d\n", n);
 	n += 1;
-	printf("n: %d\n", n);
 	operators = int_to_operators(n, n_operands);
-	printf("*operators: %s\n", operators);
 	return (operators);
 }
 
 bool check_if_solution_matches_any_operator_combo(unsigned long solution, int *operands, int n_operands) {
 	unsigned long number_of_combinations = pow(3, n_operands);
 	char *operators = NULL;
+	printf("%lu:", solution);
+	for (int i = 0; operands[i] != -1; i++) {
+		printf(" %d", operands[i]);
+	}
+	printf("\n");
 	for (int j = 0; j < number_of_combinations; j++) {
 		operators = get_next_operator_list(operators, n_operands);
+		// printf("operators: %s\n", operators);
 		unsigned long result = get_operation_result(operands, operators, n_operands);
 		// printf("solution: %lu, result: %lu\n", equation.solution, result);
 		if (solution == result) {
-			// printf("match: %lu\n", result);
+			printf("MATCH: %lu\n", result);
+			printf("operators: %s\n\n", operators);
 			return (true);
 			break;
 		}
+
+		// if (j == 10) {
+		// 	assert(0);
+		// }
 	}
 	return (false);
 }
@@ -141,6 +160,7 @@ int main(void) {
 		if (does_result_match) {
 			answer += equation.solution;
 		}
+		// assert(0);
 	}
 
 	printf("answer:\n%lu\n", answer);
